@@ -1,0 +1,5 @@
+ECHO 处于打开状态。
+"db.sqlite3"
+".DS_Store" 
+"__pycache__" 
+"*pyc" 
