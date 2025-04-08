@@ -15,7 +15,7 @@ class NewVisitorTest(unittest.TestCase):
 
     def test_can_start_a_list_and_retrieve_it_later(self):
 
-        #张三听说有一个在线待办事项的应用
+        # 张三听说有一个在线待办事项的应用
         # 他去看了这个应用的首页
         self.browser.get('http://localhost:8000')
 
@@ -35,19 +35,32 @@ class NewVisitorTest(unittest.TestCase):
         inputbox.send_keys('Buy flowers')  # (2)
 
         # 他按了回车键后，页面更新了
-        # 待办事项表格中显示了“1：Buy flowers”
+        # 待办事项表格中显示了“1:Buy flowers”
         inputbox.send_keys(Keys.ENTER)  # (3)
         time.sleep(1)  # (4)
 
         table = self.browser.find_element(By.ID, 'id_list_table')
         rows = table.find_elements(By.TAG_NAME, 'tr')  # (1)
-        self.assertIn('1: Buy flowers', [row.text for row in rows])
+        self.assertIn('1:Buy flowers', [row.text for row in rows])
 
         # 页面中又显示了一个文本输入框，可以再输入其他的待办事项
-        # 他输入了“gift to girlfriend”
-        self.fail('Finish the test!')
+        # 他输入了“Give a gift to Lisi”
+        inputbox = self.browser.find_element(By.ID, 'id_new_item')
+        inputbox.send_keys('Give a gift to Lisi')
+        inputbox.send_keys(Keys.ENTER)
+        time.sleep(1)
 
         # 页面再次更新，他的清单中显示了这两个待办事项
+        table = self.browser.find_element(By.ID, 'id_list_table')
+        rows = table.find_elements(By.TAG_NAME, 'tr')
+        self.assertIn('1:Buy flowers', [row.text for row in rows])
+        self.assertIn('2:Give a gift to Lisi', [row.text for row in rows])
+
+        # 张三想知道这个网站是否会记住他的清单
+        # 他看到网站为他生成了一个唯一的URL
+        self.fail('Finish the test!')
+
+
 
 
 if __name__ == '__main__':
