@@ -10,7 +10,7 @@ MAX_WAIT = 10
 class NewVisitorTest(LiveServerTestCase):
     
     def setUp(self):
-        self.browser = webdriver.Chrome()
+        self.browser = webdriver.Firefox()
 
     def tearDown(self):
         self.browser.quit()
