@@ -95,7 +95,7 @@ class NewVisitorTest(LiveServerTestCase):
         # 现在一个新用户王五访问网站
         # 我们使用一个新的浏览器会话来确保cookie不共享，确保张三的信息不会泄露
         self.browser.quit()
-        self.browser = webdriver.Chrome()
+        self.browser = webdriver.Firefox()
 
         # 王五访问首页，看不到张三的清单
         self.browser.get(self.live_server_url)
