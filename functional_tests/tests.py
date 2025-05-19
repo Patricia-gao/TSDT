@@ -1,7 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import time
-# from django.test import LiveServerTestCase
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import WebDriverException
@@ -9,18 +8,19 @@ import os
 
 MAX_WAIT = 10
 
+
 class NewVisitorTest(StaticLiveServerTestCase):
-    
+
     def setUp(self):
         self.browser = webdriver.Firefox()
-        self.live_server_url = 'http://8.141.116.152'
-        """ real_server = os.environ.get('REAL_SERVER') 
+        real_server = os.environ.get('REAL_SERVER')
         if real_server:
-            self.live_server_url = 'http://'+real_server """
+            self.live_server_url = 'http://' + real_server
 
     def tearDown(self):
         self.browser.quit()
 
+    # ---------- 辅助函数 ----------
     def wait_for_row_in_list_table(self, row_text):
         start_time = time.time()
         while True:
@@ -34,116 +34,84 @@ class NewVisitorTest(StaticLiveServerTestCase):
                     raise e
                 time.sleep(0.5)
 
+    # ---------- 功能测试 1 ----------
     def test_can_start_a_list_and_retrieve_it_later(self):
+        # 访问首页
+        self.browser.get(self.live_server_url)
 
-        # 张三听说有一个在线待办事项的应用
-        # 他去看了这个应用的首页
-        self.browser.get(self.live_server_url)  # (1)
-        # self.browser.get('http://localhost:8000')  # (1)
-
-        # 他注意到网页的标题和头部都包含了“To-Do”这个单词
-        self.assertIn('To-Do', self.browser.title)  
-        header_text = self.browser.find_element(By.TAG_NAME, 'h1').text  # (1)
+        # 标题与页眉包含“To-Do”
+        self.assertIn('To-Do', self.browser.title)
+        header_text = self.browser.find_element(By.TAG_NAME, 'h1').text
         self.assertIn('To-Do', header_text)
 
-        # 应用有一个输入框来添加待办事项的文本输入框
-        inputbox = self.browser.find_element(By.ID, 'id_new_item')  # (1)
-        self.assertEqual(
-            inputbox.get_attribute('placeholder'),
-            'Enter a to-do item'
-        )
-
-        # 他在文本输入框中输入了“Buy flowers”
-        inputbox.send_keys('Buy flowers')  # (2)
-
-        # 他按了回车键后，页面更新了
-        # 待办事项表格中显示了“1:Buy flowers”
-        inputbox.send_keys(Keys.ENTER)  # (3)
+        # 输入第 1 条
+        inputbox = self.browser.find_element(By.ID, 'id_new_item')
+        self.assertEqual(inputbox.get_attribute('placeholder'), 'Enter a to-do item')
+        inputbox.send_keys('Buy flowers')
+        inputbox.send_keys(Keys.ENTER)
         self.wait_for_row_in_list_table('1:Buy flowers')
 
-        #table = self.browser.find_element(By.ID, 'id_list_table')
-        #rows = table.find_elements(By.TAG_NAME, 'tr')  # (1)
-        #self.assertIn('1:Buy flowers', [row.text for row in rows])
-
-        # 页面中又显示了一个文本输入框，可以再输入其他的待办事项
-        # 他输入了“Give a gift to Lisi”
+        # 输入第 2 条
         inputbox = self.browser.find_element(By.ID, 'id_new_item')
         inputbox.send_keys('Give a gift to Lisi')
         inputbox.send_keys(Keys.ENTER)
-        time.sleep(1)
-
-        # 页面再次更新，他的清单中显示了这两个待办事项
-        #table = self.browser.find_element(By.ID, 'id_list_table')
-        #rows = table.find_elements(By.TAG_NAME, 'tr')
-        #self.assertIn('1:Buy flowers', [row.text for row in rows])
-        #self.assertIn('2:Give a gift to Lisi', [row.text for row in rows])
         self.wait_for_row_in_list_table('1:Buy flowers')
         self.wait_for_row_in_list_table('2:Give a gift to Lisi')
 
-
-
-        # 张三想知道这个网站是否会记住他的清单
-        # 他看到网站为他生成了一个唯一的URL
-        """ self.fail('Finish the test!') """
-
+    # ---------- 功能测试 2 ----------
     def test_multiple_uesrs_start_a_lists_at_different_urls(self):
-        # 张三开始了一个新清单，并看到有一个唯一的URL
+        # 张三的清单
         self.browser.get(self.live_server_url)
         inputbox = self.browser.find_element(By.ID, 'id_new_item')
         inputbox.send_keys('Buy flowers')
         inputbox.send_keys(Keys.ENTER)
         self.wait_for_row_in_list_table('1:Buy flowers')
-
-        # 他注意到他的清单URL中包含了一个唯一的编号
         zhangsan_list_url = self.browser.current_url
-        self.assertRegex(zhangsan_list_url, '/lists/.+')    # (1)
+        self.assertRegex(zhangsan_list_url, '/lists/.+')
 
-        # 现在一个新用户王五访问网站
-        # 我们使用一个新的浏览器会话来确保cookie不共享，确保张三的信息不会泄露
+        # 启动新浏览器会话（王五）
         self.browser.quit()
         self.browser = webdriver.Firefox()
 
-        # 王五访问首页，看不到张三的清单
+        # 王五访问，不应看到张三的数据
         self.browser.get(self.live_server_url)
-        page_text = self.browser.find_element(By.TAG_NAME, 'body').text
-        self.assertNotIn('Buy flowers', page_text)
-        self.assertNotIn('Give a gift to Lisi', page_text)
+        body_text = self.browser.find_element(By.TAG_NAME, 'body').text
+        self.assertNotIn('Buy flowers', body_text)
+        self.assertNotIn('Give a gift to Lisi', body_text)
 
-        # 王五开始一个新清单，他输入一个不同的待办事项
-
+        # 王五添加自己的条目
         inputbox = self.browser.find_element(By.ID, 'id_new_item')
         inputbox.send_keys('Buy milk')
-
         inputbox.send_keys(Keys.ENTER)
         self.wait_for_row_in_list_table('1:Buy milk')
 
-        # 王五获得了一个唯一的URL
         wangwu_list_url = self.browser.current_url
         self.assertRegex(wangwu_list_url, '/lists/.+')
         self.assertNotEqual(wangwu_list_url, zhangsan_list_url)
 
-        # 这个页面没有张三的清单
-        page_text = self.browser.find_element(By.TAG_NAME, 'body').text
-        self.assertNotIn('Buy flowers', page_text)
-        self.assertIn('Buy milk', page_text)
+        body_text = self.browser.find_element(By.TAG_NAME, 'body').text
+        self.assertNotIn('Buy flowers', body_text)
+        self.assertIn('Buy milk', body_text)
 
-        # 两个人都很满意
-    
-    
+    # ---------- 功能测试 3 ----------
     def test_layout_and_styling(self):
-        # 张三访问首页
+        # 首页居中
         self.browser.get(self.live_server_url)
         self.browser.set_window_size(1024, 768)
-
-        # 他看到输入框被放在了页面中央
         inputbox = self.browser.find_element(By.ID, 'id_new_item')
         self.assertAlmostEqual(
             inputbox.location['x'] + inputbox.size['width'] / 2,
-            512, 
+            512,
             delta=10
         )
 
-
-
-""" if __name__ == '__main__':
-    unittest.main() """
+        # 提交后仍居中
+        inputbox.send_keys('testing')
+        inputbox.send_keys(Keys.ENTER)
+        self.wait_for_row_in_list_table('1:testing')
+        inputbox = self.browser.find_element(By.ID, 'id_new_item')
+        self.assertAlmostEqual(
+            inputbox.location['x'] + inputbox.size['width'] / 2,
+            512,
+            delta=10
+        )
